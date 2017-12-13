@@ -23,3 +23,5 @@ This report includes part of the analysis we did using the Yelp Dataset to answe
 For **Part 2, 3 and 4** our goal is to determine the business strategy that would improve the chances of success. We performed three analyses that complemented each other. First (Part 2) performing sentiment analysis over customer reviews, second (Part 3) finding the most significant business attributes that positively correlate to a higher business rating or stars, and finally (Part 3) performing a qualitative analysis through a conjoint analysis over a survey sent to people residing in Las Vegas.
 
 The last analysis **(Part 5)** focuses on finding the optimal opening hours for our restaurant, we contrasted the restaurant's opening times in the Yelp dataset against Google’s “popular times” feature. The goal is to have opening times during busy hours, but also when there is low supply (not many open restaurants at the time) but with still demand to be served.
+
+<img src="scatter3.PNG">
