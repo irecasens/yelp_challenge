@@ -1,0 +1,182 @@
+---
+title: "Yelp data"
+author: "Ignacio Recasens"
+date: "2 de noviembre de 2017"
+output: html_document
+---
+
+
+```{r}
+
+library(RevoScaleR)
+library(readxl)
+library(dplyr)
+library(dummies)
+
+path = dirname(rstudioapi::getActiveDocumentContext()$path)
+setwd(path)
+
+```
+
+
+```{r}
+
+#df = read_excel("reg_df2.xlsx")
+df = read.csv('reg_df2.csv')
+
+df$X = NULL
+df$business_stars = as.numeric(as.character(df$business_stars))
+df
+
+```
+
+
+
+```{r}
+
+# Let's create it a a XDF file format (faster to compute and neeeded for RevoScaleR)
+
+xdf_reg <- "reg_df.xdf"
+rxImport(inData = df,
+         outFile = xdf_reg,
+         overwrite=TRUE)
+
+xdf_reg
+ rxGetInfo(xdf_reg, getVarInfo = TRUE, numRows = 0)
+
+```
+
+
+
+```{r}
+
+# Create the regression formula
+
+form <- formula(business_stars ~  
+Alcohol_beer_and_wine +  Alcohol_full_bar +
+HasTV_No +  HasTV_Yes +
+NoiseLevel_No +  NoiseLevel_average +
+NoiseLevel_loud +  NoiseLevel_quiet +
+NoiseLevel_very_loud +   Ambience_trendy_No +
+Ambience_trendy_Yes +   Ambience_casual_No +
+Ambience_casual_Yes +  RestaurantsGoodForGroups_No +
+RestaurantsGoodForGroups_Yes +  Caters_No +
+Caters_Yes +  
+WiFi_free +  WiFi_paid +
+RestaurantsReservations_No +  RestaurantsReservations_Yes +
+RestaurantsTableService_No +  RestaurantsTableService_Yes +
+Corkage_No +  Corkage_Yes +
+GoodForKids_No +  GoodForKids_Yes +
+WheelchairAccessible_No +  WheelchairAccessible_Yes +
+BikeParking_No +  BikeParking_Yes +
+OutdoorSeating_No +  OutdoorSeating_Yes +
+RestaurantsPriceRange2_2 +  RestaurantsPriceRange2_3 +
+RestaurantsPriceRange2_4 +  RestaurantsPriceRange2_No +
+RestaurantsPriceRange2_Yes +  RestaurantsDelivery_No +
+RestaurantsDelivery_Yes +  GoodForMeal_dessert_No +
+GoodForMeal_dessert_Yes +  GoodForMeal_latenight_No +
+GoodForMeal_latenight_Yes +  GoodForMeal_lunch_No +
+GoodForMeal_lunch_Yes +  GoodForMeal_dinner_No +
+GoodForMeal_dinner_Yes +  GoodForMeal_breakfast_No +
+GoodForMeal_breakfast_Yes +  GoodForMeal_brunch_No +
+GoodForMeal_brunch_Yes  +  BusinessParking_street_No +
+BusinessParking_street_Yes +  BusinessParking_validated_No +
+BusinessParking_validated_Yes +  BusinessParking_lot_No +
+BusinessParking_lot_Yes +  BusinessParking_valet_No +
+BusinessParking_valet_Yes +   Music_background_music_No +
+Music_background_music_Yes +  Music_no_music_No +
+Music_karaoke_No +  Music_karaoke_Yes +
+Music_live_No +  Music_live_Yes + Ambience_touristy_No+
+Music_video_No +  Music_video_Yes +
+Music_jukebox_No +  Music_jukebox_Yes +
+BestNights_monday_No +  BestNights_monday_Yes +
+BestNights_tuesday_No +  BestNights_tuesday_Yes +
+BestNights_friday_No +  BestNights_friday_Yes +
+BestNights_wednesday_No +  BestNights_wednesday_Yes +
+BestNights_thursday_No +  BestNights_thursday_Yes +
+BestNights_sunday_No +  BestNights_sunday_Yes +
+BestNights_saturday_No +  BestNights_saturday_Yes + 
+AgesAllowed_21plus +  AgesAllowed_No +
+AgesAllowed_allages)
+
+
+scope <- list(
+    lower = ~ HasTV_Yes,
+    upper = ~ Alcohol_beer_and_wine +  Alcohol_full_bar +
+HasTV_No +  HasTV_Yes +
+NoiseLevel_No +  NoiseLevel_average +
+NoiseLevel_loud +  NoiseLevel_quiet +
+NoiseLevel_very_loud +    Ambience_trendy_No +
+Ambience_trendy_Yes +  Ambience_casual_No +
+Ambience_casual_Yes +  RestaurantsGoodForGroups_No +
+RestaurantsGoodForGroups_Yes +  Caters_No +
+Caters_Yes +  
+WiFi_free +  WiFi_paid +
+RestaurantsReservations_No +  RestaurantsReservations_Yes +
+RestaurantsTableService_No +  RestaurantsTableService_Yes +
+Corkage_No +  Corkage_Yes +
+GoodForKids_No +  GoodForKids_Yes +
+WheelchairAccessible_No +  WheelchairAccessible_Yes +
+BikeParking_No +  BikeParking_Yes + Ambience_touristy_No+
+OutdoorSeating_No +  OutdoorSeating_Yes +
+RestaurantsPriceRange2_2 +  RestaurantsPriceRange2_3 +
+RestaurantsPriceRange2_4 +  RestaurantsPriceRange2_No +
+RestaurantsPriceRange2_Yes +  RestaurantsDelivery_No +
+RestaurantsDelivery_Yes +  GoodForMeal_dessert_No +
+GoodForMeal_dessert_Yes +  GoodForMeal_latenight_No +
+GoodForMeal_latenight_Yes +  GoodForMeal_lunch_No +
+GoodForMeal_lunch_Yes +  GoodForMeal_dinner_No +
+GoodForMeal_dinner_Yes +  GoodForMeal_breakfast_No +
+GoodForMeal_breakfast_Yes +  GoodForMeal_brunch_No +
+GoodForMeal_brunch_Yes +  BusinessParking_street_No +
+BusinessParking_street_Yes +  BusinessParking_validated_No +
+BusinessParking_validated_Yes +  BusinessParking_lot_No +
+BusinessParking_lot_Yes +  BusinessParking_valet_No +
+BusinessParking_valet_Yes + Music_background_music_No +
+Music_background_music_Yes +  Music_no_music_No +
+Music_karaoke_No +  Music_karaoke_Yes +
+Music_live_No +  Music_live_Yes +
+Music_video_No +  Music_video_Yes +
+Music_jukebox_No +  Music_jukebox_Yes +
+BestNights_monday_No +  BestNights_monday_Yes +
+BestNights_tuesday_No +  BestNights_tuesday_Yes +
+BestNights_friday_No +  BestNights_friday_Yes +
+BestNights_wednesday_No +  BestNights_wednesday_Yes +
+BestNights_thursday_No +  BestNights_thursday_Yes +
+BestNights_sunday_No +  BestNights_sunday_Yes +
+BestNights_saturday_No +  BestNights_saturday_Yes +
+AgesAllowed_21plus +  AgesAllowed_No +
+AgesAllowed_allages)
+ 
+
+```
+
+
+
+
+```{r}
+
+# Let's find the most important attributes using a Stepwise Regresion
+
+varsel <- rxStepControl(method = "stepwise", scope = scope)
+
+mod2<- rxLinMod(form, data = xdf_reg,
+ 	              blocksPerRead=100000,
+	              variableSelection = varsel,
+                      verbose = 0, 
+		      dropMain = FALSE, 
+		      coefLabelStyle = "R")
+
+summary(mod2)
+
+
+```
+
+
+
+
+
+
+
+
+
